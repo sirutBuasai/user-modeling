@@ -83,8 +83,15 @@ if __name__ == '__main__':
     correlation1_treatment = treatment_problem_set['problem_set_percent_completed'].corr(treatment_problem_set['assignment_completed'])
     print("Correlation between assignment completion and feature 1 (problem_set_percent_completed)")
     print(f"Correlation for all students: {correlation1_all}")
+    # The correlation between assignment completion and the problem set percent complete for all students is 0.24.
+    # This suggests that there is a minor positive correlation but not significant one to be a sole predictor.
     print(f"Correlation for control students: {correlation1_control}")
+    # The correlation between assignment completion and the problem set percent complete for control students is 0.03.
+    # This suggests that there is no significant correlation between the two variables.
     print(f"Correlation for treatment students: {correlation1_treatment}")
+    # The correlation between assignment completion and the problem set percent complete for treatment students is 0.17.
+    # This suggests that there is a minor positive correlation but not significant one to be a sole predictor.
+    # However, problem set percent complete may be a better predictor for students in treatment than students in control setting.
     print("")
 
     # Feature 2: class_prior_average_correctness
@@ -97,8 +104,16 @@ if __name__ == '__main__':
     correlation2_treatment = treatment_class_correctness['class_prior_average_correctness'].corr(treatment_class_correctness['assignment_completed'])
     print("Correlation between assignment completion and feature 2 (class_prior_average_correctness)")
     print(f"Correlation for all students: {correlation2_all}")
+    # The correlation between assignment completion and the problem set percent complete for all students is 0.17.
+    # This suggests that there is a minor positive correlation but not significant one to be a sole predictor.
     print(f"Correlation for control students: {correlation2_control}")
+    # The correlation between assignment completion and the problem set percent complete for control students is 0.17.
+    # This suggests that there is a minor positive correlation but not significant one to be a sole predictor.
     print(f"Correlation for treatment students: {correlation2_treatment}")
+    # The correlation between assignment completion and the problem set percent complete for treatment students is 0.07.
+    # This suggests that there is no significant correlation between the two variables.
+    # Given these three correlations, this may suggests that class class prior average correctness
+    # may be a better predictor for students in control than students in treatment setting.
     print("")
 
     # Feature 3: opportunity_zone
@@ -108,18 +123,26 @@ if __name__ == '__main__':
     all_opportunity_zone = features[pd.notna(features['opportunity_zone'])]
     control_opportunity_zone = features[(pd.notna(features['opportunity_zone'])) & (features['assigned_condition'] == 'Control')]
     treatment_opportunity_zone = features[(pd.notna(features['opportunity_zone'])) & (features['assigned_condition'] == 'Treatment')]
-    # Calculate the correlation between assignment completeion and the opportunity zone
+    # Calculate the correlation between assignment completion and the opportunity zone
     correlation3_all = all_opportunity_zone['opportunity_zone'].corr(all_opportunity_zone['assignment_completed'])
     correlation3_control = control_opportunity_zone['opportunity_zone'].corr(control_opportunity_zone['assignment_completed'])
     correlation3_treatment = treatment_opportunity_zone['opportunity_zone'].corr(treatment_opportunity_zone['assignment_completed'])
     print("Correlation between assignment completion and feature 3 (opportunity_zone)")
     print(f"Correlation for all students: {correlation3_all}")
+    # The correlation between assignment completion and the problem set percent complete for all students is -0.09.
+    # This suggests that there is no significant correlation between the two variables.
     print(f"Correlation for control students: {correlation3_control}")
+    # The correlation between assignment completion and the problem set percent complete for control students is -0.32.
+    # This suggests that there is a minor negative correlation but not significant one to be a sole predictor.
     print(f"Correlation for treatment students: {correlation3_treatment}")
+    # The correlation between assignment completion and the problem set percent complete for treatment students is -0.03.
+    # This suggests that there is no significant correlation between the two variables.
+    # These correlations suggest that opportunity zone may be a better predictor for students in control than sutdents in treatment setting.
+    # This could be interpreted that the treatment allows students in opportunity zone to perform as good as students that aren't.
     print("")
 
     # Show plot
     # plt.scatter(all_problem_set['problem_set_percent_completed'], all_problem_set['assignment_completed'])
     # plt.scatter(all_class_correctness['class_prior_average_correctness'], all_class_correctness['assignment_completed'])
-    plt.scatter(all_opportunity_zone['opportunity_zone'], all_opportunity_zone['assignment_completed'])
-    plt.show()
+    # plt.scatter(all_opportunity_zone['opportunity_zone'], all_opportunity_zone['assignment_completed'])
+    # plt.show()
