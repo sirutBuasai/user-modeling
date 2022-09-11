@@ -12,12 +12,11 @@ if __name__ == '__main__':
     plogs = pd.read_csv(os.path.join(exp_dir, 'exp_plogs.csv'))
     slogs = pd.read_csv(os.path.join(exp_dir, 'exp_slogs.csv'))
     priors = pd.read_csv(os.path.join(exp_dir, 'priors.csv'))
-    # -----------------------------------------
 
 
     # -----------------------------------------
     # TASK 1
-
+    # -----------------------------------------
     # Calculate the number of students in Control/Treatment
     control_count = len(alogs[alogs['assigned_condition'] == 'Control'])
     treatment_count = len(alogs[alogs['assigned_condition'] == 'Treatment'])
@@ -51,12 +50,11 @@ if __name__ == '__main__':
     # One explanation for this result is that there were external factors at play, such as parents urging their children to finish the assignment.
     # This would mean that regardless of the assigned conditions of the student, they had to finish the assignment anyway.
     # In this case, the assignment completion rate may not be the best predictor of whether or not the treatment is effective.
-    # -----------------------------------------
 
 
     # -----------------------------------------
     # TASK 2
-
+    # -----------------------------------------
     # 3 features that I think could influence the students' ability to complete their assignments are the following:
     # 1. problem_set_percent_completed (student_prior_completed_problem_set_count / student_prior_started_problem_set_count)
     #    because this feature can indicate how responsible a student is in completing his/her assignments.
@@ -169,12 +167,11 @@ if __name__ == '__main__':
     # plt.scatter(all_class_correctness['class_prior_average_correctness'], all_class_correctness['assignment_completed'])
     # plt.scatter(all_opportunity_zone['opportunity_zone'], all_opportunity_zone['assignment_completed'])
     # plt.show()
-    # -----------------------------------------
 
 
     # -----------------------------------------
     # TASK 3
-
+    # -----------------------------------------
     # We will need to split the data into training and testing set to make sure that our model will not overfit.
     # The training set will be used to train the model. Once trained, the model will be evaluate based on how well it can predict the results on the testing set.
 
