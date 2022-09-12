@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     # Load the data sets
-    exp_dir = 'PSA2KNW'
+    exp_dir = 'PSA52JK'
     alogs = pd.read_csv(os.path.join(exp_dir, 'exp_alogs.csv'))
     plogs = pd.read_csv(os.path.join(exp_dir, 'exp_plogs.csv'))
     slogs = pd.read_csv(os.path.join(exp_dir, 'exp_slogs.csv'))
