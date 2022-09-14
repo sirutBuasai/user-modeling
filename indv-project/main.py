@@ -1,13 +1,16 @@
 import os
 import numpy as np
 import pandas as pd
-from statsmodels.stats.proportion import proportions_ztest
 import matplotlib.pyplot as plt
+from statsmodels.stats.proportion import proportions_ztest
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import balanced_accuracy_score, average_precision_score, confusion_matrix
 
 
 if __name__ == '__main__':
     # Load the data sets
-    exp_dir = 'PSA52JK'
+    exp_dir = 'PSA59VC'
     alogs = pd.read_csv(os.path.join(exp_dir, 'exp_alogs.csv'))
     plogs = pd.read_csv(os.path.join(exp_dir, 'exp_plogs.csv'))
     slogs = pd.read_csv(os.path.join(exp_dir, 'exp_slogs.csv'))
@@ -17,17 +20,19 @@ if __name__ == '__main__':
     # -----------------------------------------
     # TASK 1
     # -----------------------------------------
+    print("TASK 1")
+    print("-----------------------------------------")
     # Calculate the number of students in Control/Treatment
     control_count = len(alogs[alogs['assigned_condition'] == 'Control'])
     treatment_count = len(alogs[alogs['assigned_condition'] == 'Treatment'])
-    print(f"# of students in control condition: {control_count}")
-    print(f"# of students in treatment condition: {treatment_count}")
+    print(f"# of students in control condition:\t{control_count}")
+    print(f"# of students in treatment condition:\t{treatment_count}")
 
     # Calculate the proportion of students who completed the assignment while in Control/Treatment
     control_completed_count = len(alogs[(alogs['assigned_condition'] == 'Control') & (pd.notna(alogs['end_time']))])
     treatment_completed_count = len(alogs[(alogs['assigned_condition'] == 'Treatment') & (pd.notna(alogs['end_time']))])
-    print(f"% of students placed in a control condition who completed the assignment: {control_completed_count / control_count}")
-    print(f"% of students placed in a treatment condition who completed the assignment: {treatment_completed_count / treatment_count}")
+    print(f"% of students placed in a control condition who completed the assignment:\t{control_completed_count / control_count}")
+    print(f"% of students placed in a treatment condition who completed the assignment:\t{treatment_completed_count / treatment_count}\n")
 
     # To find the likelihood that a student completed their assignment was influenced by which condition they were placed it,
     # we can utilize the two-proportion z-test to determine whether the two populations (Control/Treatment) are statistically different.
@@ -41,10 +46,10 @@ if __name__ == '__main__':
     completed_count = np.array([control_completed_count, treatment_completed_count])
     # Calculate the z-statistic and the corresponding p-value using statsmodels library
     z_stat, p_val = proportions_ztest(completed_count, num_obs)
-    print(f"z-statistic score: {z_stat}")
-    print(f"two-tailed hypothesis p-value: {p_val}\n")
+    print(f"z-statistic score:\t\t{z_stat}")
+    print(f"two-tailed hypothesis p-value:\t{p_val}\n\n")
 
-    # The two-tailed hypothesis p-value of 0.63 is not statistically significant (0.63 > 0.05) and therefore, we cannot reject the null hypothesis.
+    # The two-tailed hypothesis p-value of 0.66 is not statistically significant (0.63 > 0.05) and therefore, we cannot reject the null hypothesis.
     # This means that the two-proportion z-test suggests that there is no significant relationship between the likelihood of students completing their assignment,
     # and the condition that they were placed in.
     # One explanation for this result is that there were external factors at play, such as parents urging their children to finish the assignment.
@@ -55,6 +60,8 @@ if __name__ == '__main__':
     # -----------------------------------------
     # TASK 2
     # -----------------------------------------
+    print("TASK 2")
+    print("-----------------------------------------")
     # 3 features that I think could influence the students' ability to complete their assignments are the following:
     # 1. problem_set_percent_completed (student_prior_completed_problem_set_count / student_prior_started_problem_set_count)
     #    because this feature can indicate how responsible a student is in completing his/her assignments.
@@ -71,19 +78,29 @@ if __name__ == '__main__':
     # Create a features tables with only relevant features
     features = pd.merge(relevant_alogs, relevant_priors, on='student_id')
 
-    # Cleaning up the features table to include only relevant features
-    # Create a one-hot column for whether or not a student completed their assignment based on NaN values in end_time
+    # Before we can calculate statistics and train any model, we first need to clean up the data that we have.
+    # 1. We convert all end_time column to a binary column called assignment_completed based on whether it contains a NaN value.
     features['assignment_completed'] = np.where(pd.notna(features['end_time']), 1, 0)
-    # Clean up opportunity_zone column values by replacing 'Yes' with 1 and 'No' with 0
-    features.replace({'opportunity_zone' : {'Yes' : 1, 'No' : 0}}, inplace=True)
-    # Clean up assigned_condition column values by replacing 'Treatment' with 1 and 'Control' with 0
+
+    # 2. We convert all assigned condition into a binary column of 1 being Treatment and 0 being Control
     features.replace({'assigned_condition' : {'Treatment' : 1, 'Control' : 0}}, inplace=True)
-    # Create a problem_set_percent_completed column based on the ratio between problem set completion / problem set started.
+
+    # 3. We drop all students that are not assigned a condition (This dataset has Control, Treatment, Not Assigned)
+    features = features[(features['assigned_condition'] == 1) | (features['assigned_condition'] == 0)]
+
+    # 4. We create a problem_set_percent_completed column based on the ratio between problem set completion / problem set started
     features['problem_set_percent_completed'] = features['student_prior_completed_problem_set_count'] / features['student_prior_started_problem_set_count']
-    # Drop unused columns
+
+    # 5. We convert opportunity_zone from Yes/No into a binary column of 1 being Yes and 0 being No
+    features.replace({'opportunity_zone' : {'Yes' : 1, 'No' : 0}}, inplace=True)
+
+    # 6. We drop all unused columns (end_time, student_prior_started_problem_set_count, student_prior_completed_problem_set_count)
     features.drop(columns=['end_time',
                            'student_prior_started_problem_set_count',
                            'student_prior_completed_problem_set_count'], inplace=True)
+
+    # 5. We drop all rows in with NaN
+    features.dropna(inplace=True)
 
     # Feature 1: problem_set_percent_completed
     # We only consider students who have started a problem set.
@@ -97,18 +114,17 @@ if __name__ == '__main__':
     correlation1_treatment = treatment_problem_set['problem_set_percent_completed'].corr(treatment_problem_set['assignment_completed'])
 
     print("Correlation between assignment completion and feature 1 (problem_set_percent_completed)")
-    print(f"Correlation for all students: {correlation1_all}")
-    # The correlation between assignment completion and the problem set percent complete for all students is 0.24.
-    # This suggests that there is a minor positive correlation but not significant one to be a sole predictor.
+    print(f"Correlation for all students:\t\t{correlation1_all}")
+    # The correlation between assignment completion and the problem set percent complete for all students is 0.20
+    # This suggests that there is a minor positive correlation but not significant.
 
-    print(f"Correlation for control students: {correlation1_control}")
-    # The correlation between assignment completion and the problem set percent complete for control students is 0.03.
-    # This suggests that there is no significant correlation between the two variables.
+    print(f"Correlation for control students:\t{correlation1_control}")
+    # The correlation between assignment completion and the problem set percent complete for control students is 0.16.
+    # This suggests that there is a minor positive correlation but not significant.
 
-    print(f"Correlation for treatment students: {correlation1_treatment}\n")
-    # The correlation between assignment completion and the problem set percent complete for treatment students is 0.17.
-    # This suggests that there is a minor positive correlation but not significant one to be a sole predictor.
-    # However, problem set percent complete may be a better predictor for students in treatment than students in control setting.
+    print(f"Correlation for treatment students:\t{correlation1_treatment}\n")
+    # The correlation between assignment completion and the problem set percent complete for treatment students is 0.24.
+    # This suggests that there is a minor positive correlation but not significant.
 
     # Feature 2: class_prior_average_correctness
     # We only consider non-NaN values for the class average correctness
@@ -122,19 +138,17 @@ if __name__ == '__main__':
     correlation2_treatment = treatment_class_correctness['class_prior_average_correctness'].corr(treatment_class_correctness['assignment_completed'])
 
     print("Correlation between assignment completion and feature 2 (class_prior_average_correctness)")
-    print(f"Correlation for all students: {correlation2_all}")
-    # The correlation between assignment completion and the problem set percent complete for all students is 0.17.
-    # This suggests that there is a minor positive correlation but not significant one to be a sole predictor.
+    print(f"Correlation for all students:\t\t{correlation2_all}")
+    # The correlation between assignment completion and the problem set percent complete for all students is 0.10.
+    # This suggests that there is a minor positive correlation but not significant.
 
-    print(f"Correlation for control students: {correlation2_control}")
-    # The correlation between assignment completion and the problem set percent complete for control students is 0.17.
-    # This suggests that there is a minor positive correlation but not significant one to be a sole predictor.
+    print(f"Correlation for control students:\t{correlation2_control}")
+    # The correlation between assignment completion and the problem set percent complete for control students is 0.10.
+    # This suggests that there is very minor positive correlation but not significant.
 
-    print(f"Correlation for treatment students: {correlation2_treatment}\n")
-    # The correlation between assignment completion and the problem set percent complete for treatment students is 0.07.
-    # This suggests that there is no significant correlation between the two variables.
-    # Given these three correlations, this may suggests that class class prior average correctness
-    # may be a better predictor for students in control than students in treatment setting.
+    print(f"Correlation for treatment students:\t{correlation2_treatment}\n")
+    # The correlation between assignment completion and the problem set percent complete for treatment students is 0.10.
+    # This suggests that there is very minor positive correlation but not significant.
 
     # Feature 3: opportunity_zone
     # We only consider non-NaN values for opportunity zones
@@ -148,19 +162,17 @@ if __name__ == '__main__':
     correlation3_treatment = treatment_opportunity_zone['opportunity_zone'].corr(treatment_opportunity_zone['assignment_completed'])
 
     print("Correlation between assignment completion and feature 3 (opportunity_zone)")
-    print(f"Correlation for all students: {correlation3_all}")
-    # The correlation between assignment completion and the problem set percent complete for all students is -0.09.
+    print(f"Correlation for all students:\t\t{correlation3_all}")
+    # The correlation between assignment completion and the problem set percent complete for all students is -0.01.
     # This suggests that there is no significant correlation between the two variables.
 
-    print(f"Correlation for control students: {correlation3_control}")
-    # The correlation between assignment completion and the problem set percent complete for control students is -0.32.
-    # This suggests that there is a minor negative correlation but not significant one to be a sole predictor.
-
-    print(f"Correlation for treatment students: {correlation3_treatment}\n")
-    # The correlation between assignment completion and the problem set percent complete for treatment students is -0.03.
+    print(f"Correlation for control students:\t{correlation3_control}")
+    # The correlation between assignment completion and the problem set percent complete for control students is -0.04
     # This suggests that there is no significant correlation between the two variables.
-    # These correlations suggest that opportunity zone may be a better predictor for students in control than sutdents in treatment setting.
-    # This could be interpreted that the treatment allows students in opportunity zone to perform as good as students that aren't.
+
+    print(f"Correlation for treatment students:\t{correlation3_treatment}\n")
+    # The correlation between assignment completion and the problem set percent complete for treatment students is 0.02
+    # This suggests that there is no significant correlation between the two variables.
 
     # Show plot
     # plt.scatter(all_problem_set['problem_set_percent_completed'], all_problem_set['assignment_completed'])
@@ -172,17 +184,48 @@ if __name__ == '__main__':
     # -----------------------------------------
     # TASK 3
     # -----------------------------------------
+    print("TASK 3")
+    print("-----------------------------------------")
     # We will need to split the data into training and testing set to make sure that our model will not overfit.
     # The training set will be used to train the model. Once trained, the model will be evaluate based on how well it can predict the results on the testing set.
 
     # For the supervised learning model, I will use a logistic regression model because
-    # this is a     regression problem where the output will either be 1 or 0 (assignment completed vs not completed).
+    # this is a logistic regression problem where the output will either be 1 or 0 (assignment completed vs not completed).
 
-    # Before we can train the model, we first need to clean up the data that we have.
-    # 1. We convert all end_time column to a one-hot assignment_completed based on whether it contains a NaN value.
-    # 2. We convert all assigned condition into one-hot column with 1 being Treatment and 0 being Control
-    # 3. We drop all unused columns (end_time, student_prior_started_problem_set_count, student_prior_completed_problem_set_count)
-    # 4. We drop all rows with assigned_condition that are Not Assigned.
-    # 5. We drop all rows with problem_set_percent_completed that are NaN
-    # 6. We drop all rows with class_prior_average_correctness that are NaN
-    # 7. We drop all rows with opportunity_zone that are NaN
+    # separate table into x (features) and y (labels)
+    x = features[['assigned_condition', 'problem_set_percent_completed', 'class_prior_average_correctness', 'opportunity_zone']]
+    y = features['assignment_completed']
+
+    # shuffle data around to avoid bias
+    rand_int = np.random.randint(x.shape[1])
+    rand_x = x.sample(frac=1, random_state=rand_int)
+    rand_y = y.sample(frac=1, random_state=rand_int)
+
+    # separate training and testing set into 80/20 split
+    train_x, test_x, train_y, test_y = train_test_split(rand_x, rand_y, test_size=0.2)
+
+    # train the model
+    model = LogisticRegression().fit(train_x, train_y)
+
+    # print out the accuracy of the model
+    print(f"Model accuracy on training set:\t{model.score(train_x, train_y)}%")
+    print(f"Model accuracy on testing set:\t{model.score(test_x, test_y)}%\n")
+
+    # print out average precision score
+    print(f"Training average precision score:\t{average_precision_score(model.predict(train_x), train_y)}")
+    print(f"Testing average precision score:\t{average_precision_score(model.predict(test_x), test_y)}\n")
+
+    # print out balance accuracy score
+    print(f"Training balanced accuracy score:\t{balanced_accuracy_score(model.predict(train_x), train_y)}")
+    print(f"Testing balanced accuracy score:\t{balanced_accuracy_score(model.predict(test_x), test_y)}\n")
+
+
+    # print out confusion matrix
+    train_tn, train_fp, train_fn, train_tp = confusion_matrix(model.predict(train_x), train_y).ravel()
+    print(f"Training confusin matrix:\n" \
+          f"    True positive:\t{train_tp}\tFalse negative:\t{train_fn}\n" \
+          f"    False positive:\t{train_fp}\tTrue negative:\t{train_tn}\n")
+    test_tn, test_fp, test_fn, test_tp = confusion_matrix(model.predict(test_x), test_y).ravel()
+    print(f"Testing confusin matrix:\n" \
+          f"    True positive:\t{test_tp}\tFalse negative:\t{test_fn}\n" \
+          f"    False positive:\t{test_fp}\tTrue negative:\t{test_tn}\n")
