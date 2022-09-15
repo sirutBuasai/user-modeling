@@ -64,11 +64,11 @@ if __name__ == '__main__':
     print("-----------------------------------------")
     # 3 features that I think could influence the students' ability to complete their assignments are the following:
     # 1. problem_set_percent_completed (student_prior_completed_problem_set_count / student_prior_started_problem_set_count)
-    #    because this feature can indicate how responsible a student is in completing his/her assignments.
-    # 2. class_prior_average_correctness because this feature can indicate how well the current class' in-class teaching method is working for the students.
-    # 3. opportunity_zone because this feature can indicate the amount of resources that is given to the student.
+    #    because this feature may indicate how responsible a student is in completing his/her assignments.
+    # 2. class_prior_average_correctness because this feature may indicate external factors such as in-class teaching method that may affect the group as a whole.
+    # 3. opportunity_zone because this feature may indicate the amount of resources that is given to the student.
 
-    # Pull only relevant columns from alogs and priors tables
+    # Joining tables and pull only relevant columns from alogs and priors tables
     relevant_alogs = alogs[['student_id', 'end_time', 'assigned_condition']]
     relevant_priors = priors[['student_id',
                               'student_prior_started_problem_set_count',
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
     print("Correlation between assignment completion and feature 1 (problem_set_percent_completed)")
     print(f"Correlation for all students:\t\t{correlation1_all}")
-    # The correlation between assignment completion and the problem set percent complete for all students is 0.20
+    # The correlation between assignment completion and the problem set percent complete for all students is 0.20.
     # This suggests that there is a minor positive correlation but not significant.
 
     print(f"Correlation for control students:\t{correlation1_control}")
@@ -167,11 +167,11 @@ if __name__ == '__main__':
     # This suggests that there is no significant correlation between the two variables.
 
     print(f"Correlation for control students:\t{correlation3_control}")
-    # The correlation between assignment completion and the problem set percent complete for control students is -0.04
+    # The correlation between assignment completion and the problem set percent complete for control students is -0.04.
     # This suggests that there is no significant correlation between the two variables.
 
     print(f"Correlation for treatment students:\t{correlation3_treatment}\n")
-    # The correlation between assignment completion and the problem set percent complete for treatment students is 0.02
+    # The correlation between assignment completion and the problem set percent complete for treatment students is 0.02.
     # This suggests that there is no significant correlation between the two variables.
 
     # Show plot
@@ -189,8 +189,8 @@ if __name__ == '__main__':
     # We will need to split the data into training and testing set to make sure that our model will not overfit.
     # The training set will be used to train the model. Once trained, the model will be evaluate based on how well it can predict the results on the testing set.
 
-    # For the supervised learning model, I will use a logistic regression model because
-    # this is a logistic regression problem where the output will either be 1 or 0 (assignment completed vs not completed).
+    # For the supervised learning model, I will use a logistic regression model because this is a binary classification problem.
+    # Logistic regression model is often used with binary classification so I believe this is an appropriate choice.
 
     # separate table into x (features) and y (labels)
     x = features[['assigned_condition', 'problem_set_percent_completed', 'class_prior_average_correctness', 'opportunity_zone']]
@@ -208,24 +208,44 @@ if __name__ == '__main__':
     model = LogisticRegression().fit(train_x, train_y)
 
     # print out the accuracy of the model
-    print(f"Model accuracy on training set:\t{model.score(train_x, train_y)}%")
-    print(f"Model accuracy on testing set:\t{model.score(test_x, test_y)}%\n")
+    print(f"Model accuracy on training set:\t\t{model.score(train_x, train_y)}")
+    print(f"Model accuracy on testing set:\t\t{model.score(test_x, test_y)}\n")
 
-    # print out average precision score
-    print(f"Training average precision score:\t{average_precision_score(model.predict(train_x), train_y)}")
-    print(f"Testing average precision score:\t{average_precision_score(model.predict(test_x), test_y)}\n")
-
-    # print out balance accuracy score
-    print(f"Training balanced accuracy score:\t{balanced_accuracy_score(model.predict(train_x), train_y)}")
-    print(f"Testing balanced accuracy score:\t{balanced_accuracy_score(model.predict(test_x), test_y)}\n")
-
-
+    # Metric 1: Confusion Matrix
     # print out confusion matrix
     train_tn, train_fp, train_fn, train_tp = confusion_matrix(model.predict(train_x), train_y).ravel()
-    print(f"Training confusin matrix:\n" \
+    print(f"Training confusing matrix:\n" \
           f"    True positive:\t{train_tp}\tFalse negative:\t{train_fn}\n" \
           f"    False positive:\t{train_fp}\tTrue negative:\t{train_tn}\n")
     test_tn, test_fp, test_fn, test_tp = confusion_matrix(model.predict(test_x), test_y).ravel()
-    print(f"Testing confusin matrix:\n" \
+    print(f"Testing confusion matrix:\n" \
           f"    True positive:\t{test_tp}\tFalse negative:\t{test_fn}\n" \
           f"    False positive:\t{test_fp}\tTrue negative:\t{test_tn}\n")
+    # The confusion matrix shows the true positive (TP), false negatives (FN), true negatives (TN), false positives (FP) of the predictions.
+    # In both training and testing set confusion matrix, the model predicts significantly more positive (assignment completed) than negative (assignment not completed)
+    # By inspecting the dataset,
+    # print(f"Number of positive labels:\t{len(y[y==1])}")
+    # print(f"Number of negative labels:\t{len(y[y==0])}\n")
+    # we can see that there is an imbalance between the positive and negative labels. In this dataset, we have twice as much students that completed
+    # the assignment than students that did not complete the assignment. As such the model tends to predict more positive labels than negative labels.
+    # This is also shown in the confusion matrix where the predictions in both training and testing set,
+    # the model predicts significantly more positive labels (TP, FN) than negative labels (TN, FP).
+
+    # Metric 2: Balanced Accuracy Score
+    # print out balance accuracy score
+    print(f"Training balanced accuracy score:\t{balanced_accuracy_score(model.predict(train_x), train_y)}")
+    print(f"Testing balanced accuracy score:\t{balanced_accuracy_score(model.predict(test_x), test_y)}\n")
+    # The balanced accuracy score of model on the training set (-60%) is slightly higher than the balanced accuracy score of the model on the testing set (~50%).
+    # However, the values of the balanced accuracy score may fluctuate more in each run of the script due to a relatively smaller testing set size (20% of the dataset).
+    # Given the imbalance nature of our dataset, the balanced accuracy scores suggests that our model may not be doing that well (~50-60% accuracy)
+    # since it often predicts that more students completed their assignment than not.
+
+    # Metric 3: Average Precision Score
+    # print out average precision score
+    print(f"Training average precision score:\t{average_precision_score(model.predict(train_x), train_y)}")
+    print(f"Testing average precision score:\t{average_precision_score(model.predict(test_x), test_y)}\n")
+    # The average precision score of the model on the training set is comparable to the score of the model on the testing set (both ~94%).
+    # This indicates that the model can often identify most positives labels (assignment completed) without predicting negative labels (assignment not completed) as positive.
+    # This makes sense given our two previous metrics suggests that the model often predicts more positive cases than negative cases.
+    # Although, the average precision score assures us that our model have good performance on positive case,
+    # previous metrics suggests that this comes at a cost of high false negative and low true negative rates.
