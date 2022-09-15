@@ -16,7 +16,7 @@
 
 
 ## Task 1
-### Dataset delcaration
+### Dataset declaration
 ```python
 # Load the data sets
 exp_dir = 'PSA59VC'
