@@ -152,12 +152,15 @@ This suggests that there is no significant correlation between the two variables
 
 ### Scatter plot for each of the features
 Problem Set Percent Complete Feature
+
 ![Image problem_set_percent_completed](./problem_set_percent_complete.png)
 
 Class Prior Average Correctness Feature
+
 ![Image class_prior_average_correctness](./class_prior_average_correctness.png)
 
 Opportunity Zone Feature
+
 ![Image opportunity_zone](./opportunity_zone.png)
 
 
@@ -212,7 +215,7 @@ The confusion matrix shows the true positive (TP), false negatives (FN), true ne
 In both training and testing set confusion matrix, the model predicts significantly more positive (assignment completed) than negative (assignment not completed)
 
 By inspecting the dataset,
-```python
+```markdown
 Number of positive labels:      900
 Number of negative labels:      421
 ```
