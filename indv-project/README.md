@@ -12,7 +12,7 @@
 
 - In this project, I decided to use `PSA59VC` adaptive vs non-adaptive experiment dataset. Before running the `main.py` script, please ensure you have the data within the directory.
 
-- I greatly recommend viewing this file with some type of markdown viewer such that it is easier to read with the markdown formatting. (I recommend viewing this on [GitHub](https://github.com/sirutBuasai/user-modeling-projects/tree/master/indv-project)
+- I greatly recommend viewing this file with some type of markdown viewer such that it is easier to read with the markdown formatting. (I recommend viewing this on [GitHub](https://github.com/sirutBuasai/user-modeling-projects/tree/master/indv-project))
 
 
 ## Task 1
